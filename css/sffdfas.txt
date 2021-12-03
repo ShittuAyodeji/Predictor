@@ -1,0 +1,308 @@
+ <?php
+include "database/connect.php";
+include "includes/functions.php";
+include "includes/session.php";
+include "includes/suggestion_function.php";
+	if(isset($_COOKIE['lang'])){
+		  $country_code=$_COOKIE['lang'];
+		  
+	  }else{
+	$country_code=lang();	
+	  }
+mysqli_set_charset($dbc,"utf-8");
+	$uid=rand(time(),5);
+	  if(isset($_COOKIE['stories_id']) && validate_numbers($_COOKIE['stories_id'])){
+		  $stories_id=$_COOKIE['stories_id'];
+	  }else{
+	  setcookie('stories_id',$uid,time()+86000 * 30);
+	  $stories_id=$uid;
+	  }
+ 	  if((isset($_COOKIE['user_country']) && validate_letters_only($_COOKIE['user_country'])) && $_COOKIE['user_country']==$_POST['country']){
+		  $user_country=$_COOKIE['user_country'];
+	  }else{
+		  setcookie('user_country',$_POST['country'],time()+86000 * 365);
+	  } 
+	  if(isset($_POST['start'],$_POST['per_page']) &&(validate_numbers($_POST['start']) && validate_numbers($_POST['per_page']))){
+		$start=$_POST['start'];
+	$per_page=$_POST['per_page'];
+	$source=rtrim($_POST['source'],"-");
+	$source=str_replace(" ","",$source);
+	$source=str_replace("@","",$source);
+	$source=secure_input($source);
+ 	$selected_country=secure_input($_POST['country']);
+	$country="";
+	$xml = @simplexml_load_file("http://www.geoplugin.net/xml.gp?ip=".getRealIpAddr()); 
+	$alternative_country=ip_info(getRealIpAddress(), "Country");
+	if($xml!=null){
+	$country=$xml->geoplugin_countryName;
+	}else{
+	$country=$alternative_country;
+	}
+	if(isset($_COOKIE['user_country'])){
+		$country=$_COOKIE['user_country'];
+	}
+ if($country!=""){
+	 $from=$country;
+ }else{
+	 $from="";
+ }
+	 if($selected_country=="" && $from==""){
+		$country_clause="";
+	}
+	if($from==""){
+			$boost_location=$selected_country;
+		}else{
+			$boost_location=$from;
+		}  
+$current_language=country_language($boost_location);
+/**
+	/* $word_strings=explode(" ",$keyword);
+	$word_count=count($word_strings);
+	$word_clause="";
+	for($i=0; $i<$word_count; $i++){
+		$word_clause.=" title LIKE  '%".secure_input($word_strings[$i])."%' OR ";
+	}
+	$word_clause=rtrim($word_clause,"OR "); */
+	$sql=$dbc->prepare("(SELECT * FROM stories WHERE  source='$source' AND status='1') UNION (SELECT * FROM duplicates WHERE  source='$source' AND status='1') 
+	ORDER BY time DESC LIMIT ".$start.",".$per_page);	
+	
+
+/* echo $query;  */
+	$sql->execute();
+		$result=$sql->get_result();
+		$row=$result->num_rows;
+		$k=1;
+		if($row>0){
+			while($rows=$result->fetch_assoc()){
+				$id=$rows['id'];
+				$token=$rows['token'];
+				$title=reverse_secure_input($rows['title']);
+				$location=reverse_secure_input($rows['location']);
+				$url=reverse_secure_input($rows['url']);
+				$views=round_up($rows['views']);
+				$image=$rows['image'];
+				$category=$rows['category'];
+				$story_type=$rows['type'];
+				$website=domain_name($url);
+				$time=get_timeago($rows['time']);
+				$favicon="https://www.google.com/s2/favicons?domain_url=".domain_name_image($url);
+				$rand_num=rand(1,20);
+				$boost_id="s-".$id;
+				$boost="s";
+
+	if(!file_exists($image)){
+				$image="photos/noimage.jpg";	
+	}
+	$num_boost=boosts($id,$category);
+	if(isset($_SESSION['user_id'])){
+		$user_id=$_SESSION['user_id'];
+	}else{
+		$user_id=0;
+	}
+	$user_boost=booster($user_id,$category,$id);
+	if($user_boost==1){
+		$boosted="boosted";
+	}else{
+		$boosted="";
+	}
+	$links=get_links($token);
+	/* $remainder=$start%10;
+	 if($remainder==0 && $rand_num>18){
+	$query_link = "UPDATE stories SET views=views+1 WHERE id=$id";
+	 mysqli_query($dbc,$query_link) or die('error');
+	} */
+	if(isset($_SESSION['user_id'])){
+		$source_follower_id=$_SESSION['user_id'];
+	   $follow_sources=follower_preferred_source($source_follower_id,$website);
+	    $bookmarked=saved($id,$source_follower_id);
+	   if($follow_sources==1){
+		   $follow_source="followed-source";
+		   $follow_icon="fa fa-bell-o";
+	   }else{
+		  $follow_source="";  
+		  $follow_icon="fa fa-bell-o";
+	   }
+	   if($bookmarked==1){
+		   $saved="saved";
+	   }else{
+		  $saved="";  
+	   }
+	   $rejected_story=rejected_feed_tabs($source_follower_id,$token);
+	$rejected_source=rejected_feed_tabs($source_follower_id,$website);
+	}else{
+	$rejected_story=0;
+	$rejected_source=0;
+	}
+	if($rejected_source!=1){
+	if($rejected_story!=1){
+	$link_img_id=rand(5,time());
+	$trending_pieces=$id."-".$category;
+	
+	if($country_code=="en"  || $current_language=="global"){
+	$country_clause="location='$boost_location' OR location='global'";
+	}else{
+	$country_clause="location='$boost_location'";	
+	}
+	
+	if($current_language!="global"){
+	$country_clause="location='$boost_location'";	
+	}
+	
+	$trending=trending($boost_location);
+	$trending=explode(",",$trending);
+
+	if($trending!=""){
+	if(in_array($trending_pieces,$trending)){
+		$trending_word=translate($country_code,"trending_story");
+		$trending_ts="ts-trending_story";
+	}else{
+		$trending_word=$trending_ts="";
+	}
+	}else{
+		$trending_word=$trending_ts="";
+	}
+	
+	 ?>
+	   <li class="news-wrap story-tab-<?php echo $token; ?>">
+	   <!---<a href="stories/<?php echo str_replace(" ","-",strip_clean($title))."_".$id; ?>">stories</a>--->
+	   <ul>
+	   <li>
+	   <span class="page-actions" id="<?php echo $token; ?>" target="<?php echo $website; ?>"><i class="fa fa-chevron-down" aria-hidden="true"></i></span>
+
+	   <span class="news-type ts-<?php echo $story_type; ?>" target="<?php echo $story_type; ?>"><?php echo translate($country_code,$story_type); ?></span>
+	   <span class="trending-news <?php echo $trending_ts; ?>"><?php echo $trending_word; ?></span>
+	   <span class="headline"><a href="<?php echo "links.php?id=".$id."&type=".$category."&url=".$url; ?>" class="title-<?php echo $id; ?>" target="_blank"><?php echo $title; ?></a></span>
+	   <div class="news-details">
+		<span class="link-icon hidden link-icon-<?php echo $link_img_id; ?>"><img src="<?php echo $favicon; ?>" /></span>
+	    <span class="web-source source" target="<?php echo $link_img_id; ?>">@<?php echo $website; ?></span>
+	    <span class="time"> - <?php echo $time; ?></span>
+		
+		<!--<span class="views"><i class="fa fa-eye" aria-hidden="true"></i> <?php echo $views; ?></span>--->
+	   </div>
+	   <?php
+			if($links>1){
+		?>
+		<span class="other-links" target="<?php echo $token; ?>"> <?php echo round_up($links); ?> <span class="ts-link"><?php echo translate($country_code,"link"); ?></span></span>
+		<?php
+		}
+		?>
+	   </li>
+	   <li>
+	   <a href="<?php echo "links.php?id=".$id."&type=".$category."&url=".$url; ?>" target="_blank"><div class="news-image source-news-image-<?php echo $start; ?>">
+	   <img src="<?php echo $image; ?>" />
+	   </div></a>
+	   </li>
+	   </ul>
+	      <div class="boost">
+		<?php
+		if(isset($_SESSION['user_id'])){
+		?>
+		<i class="fa fa-rocket boost-btn <?php echo $boosted." ".$boost_id; ?>" id="<?php echo $id; ?>" target="<?php echo $boost; ?>"  aria-hidden="true"></i>
+		<?php
+		}else{
+		?>
+		<a href="login/"><i class="fa fa-rocket boost-btn"  aria-hidden="true"></i></a>	
+		<?php
+		}
+		?>
+		<span class="boosts ts-boost"><?php echo translate($country_code,"boost"); ?></span> 
+		<span class="boosts boosts-<?php echo $boost_id; ?>"><?php echo round_up($num_boost); ?></span>
+		
+			  <?php
+	  if(isset($_SESSION['user_id'])){
+	  ?>
+	   <span id="<?php echo $id; ?>" class="flag" target="<?php echo $category; ?>"><i class="fa fa-flag flag-<?php echo $id; ?>" aria-hidden="true"></i></span>
+      <span id="<?php echo $id; ?>" target="<?php echo $category; ?>" class="star <?php echo $saved; ?>"><i class="fa fa-bookmark-o star-<?php echo $id; ?>" aria-hidden="true"></i></span>	  
+	 <?php
+	}else{
+	 ?>
+	  <a href="login/" class="flag" ><i class="fa fa-flag flag-<?php echo $id; ?>" aria-hidden="true"></i></a>
+      <a href="login/" class="star"><i class="fa fa-bookmark-o star-<?php echo $id; ?>" aria-hidden="true"></i></a>	  
+	  <?php
+	}
+	
+		if(isset($_SESSION['user_id'])){
+		?>
+		 <span class="follow-source bell follow-source-<?php echo $id; ?> <?php echo $follow_source; ?>" caption="<?php echo $website."|".$id; ?>"><i class="<?php echo $follow_icon; ?>" aira-hidden="true"></i></span>
+		<?php
+		}else{
+		?>
+		<span class="follow-source bell"><a href="login/"><i class="fa fa-bell-o" aira-hidden="true"></i></a></span>
+		<?php
+		}
+		?>
+		</div>
+		
+	   </li>
+	    <li class="undo undo-tab-<?php echo $token; ?>">Thanks. This will help us improve your feed <span class="undo-btn btn btn-primary" id="<?php echo $token; ?>" caption="">Undo</span></li>
+	      <?php
+	  /*  } */
+	   if($country_code=="en"){
+	   $suggested=suggest($title,$k);
+	   $remainder=$k%2;
+	   if($suggested!="" && $remainder==0){
+		$suggested=explode("|",$suggested);
+		$suggested_word=$suggested[0];
+		$suggested_caption=trim($suggested[1]);
+		$can_follow=trim($suggested[2]);
+		if($suggested_caption=="none" || $suggested_caption==""){
+			$suggested_caption="";
+		}else{
+			$suggested_caption="(".$suggested_caption.")";
+		}
+		$suggest_quantity=suggest_quantity($suggested_word);
+		if($suggest_quantity>0){
+		?>
+		<li class="interlude story-tab-<?php echo $token; ?>">
+		<div class="suggested">
+		<ul>
+		<li>
+		<i class="fa fa-bullseye" aria-hidden="true"></i> 
+		</li>
+		<li>
+		<span class="suggested-topic suggested-topic-<?php echo $link_img_id ?>">
+		<strong class="suggestion suggestion-<?php echo $link_img_id ?>" id="<?php echo $suggested_word; ?>"><?php echo strtoupper($suggested_word); ?></strong> <em class="suggested-caption suggested-caption-<?php echo $start; ?>" caption="<?php echo $link_img_id ?>" id="<?php echo $suggested_caption; ?>"><?php echo $suggested_caption; ?></em>
+		</span>
+		<span class="suggested-title">Related stories you may also like</span>
+		</li>
+		</ul>
+		<?php
+		if($can_follow=="yes"){
+		$being_followed=check_follower($suggested_word,$user_id,"follow_suggestions");
+		if($being_followed==1){
+			$following="<i class='fa fa-clock-o' data-toggle='tooltip' data-placement='left' title='Unfollow'></i>";
+			$follow_suggestion="show-suggestion-time";
+			$color="";
+		}else{
+			$following="Follow";
+			$color="";
+			$follow_suggestion="follow-suggestion";
+		}
+	
+	  if(isset($_SESSION['user_id'])){
+	  ?>
+		<span class=" <?php echo $follow_suggestion; ?> follow-suggested-topics  follow-suggestion-<?php echo $link_img_id." ".$color ?>" id="<?php echo $link_img_id ?>"><?php echo $following; ?></span>
+		<?php
+		}else{
+		?>
+		<a class="follow-suggestion" href="login/">Follow</a>
+		<?php
+		}
+
+		}
+		?>
+		</div>
+		</li>
+		<?php	
+		}
+			}
+			}
+	}
+	}
+			$k++;
+			}
+		}/* else{
+			echo "Not found";
+		} */
+	  }
+		?>

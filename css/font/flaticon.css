@@ -1,0 +1,73 @@
+	/*
+  	Flaticon icon font: Flaticon
+  	Creation date: 24/10/2017 03:11
+  	*/
+
+@font-face {
+  font-family: "Flaticon";
+  src: url("./Flaticon.eot");
+  src: url("./Flaticon.eot?#iefix") format("embedded-opentype"),
+       url("./Flaticon.woff") format("woff"),
+       url("./Flaticon.ttf") format("truetype"),
+       url("./Flaticon.svg#Flaticon") format("svg");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  @font-face {
+    font-family: "Flaticon";
+    src: url("./Flaticon.svg#Flaticon") format("svg");
+  }
+}
+
+[class^="flaticon-"]:before, [class*=" flaticon-"]:before,
+[class^="flaticon-"]:after, [class*=" flaticon-"]:after {   
+  font-family: Flaticon;
+        font-size: 32px;
+font-style: normal;
+/* margin-left: 20px; */
+}
+
+[class^="category-icon "]:before, [class*=" category-icon"]:before,
+[class^="category-icon "]:after, [class*=" category-icon"]:after {   
+        font-size: 20px;
+font-style: normal;
+/* margin-left: 20px; */
+}
+
+[class^="spinner-icon "]:before, [class*=" spinner-icon"]:before,
+[class^="spinner-icon "]:after, [class*=" spinner-icon"]:after {   
+        font-size: 22px;
+font-style: normal;
+/* margin-left: 20px; */
+}
+
+[class^="increase "]:before, [class*=" increase"]:before,
+[class^="increase "]:after, [class*=" increase"]:after {   
+        font-size: 38px;
+font-style: normal;
+/* margin-left: 20px; */
+}
+
+[class^="x-increase "]:before, [class*=" x-increase"]:before,
+[class^="x-increase "]:after, [class*=" x-increase"]:after {   
+        font-size: 44px;
+font-style: normal;
+/* margin-left: 20px; */
+}
+
+.flaticon-apple-watch:before { content: "\f100"; }
+.flaticon-washing-machine:before { content: "\f101"; }
+.flaticon-toolbox:before { content: "\f102"; }
+.flaticon-drone:before { content: "\f103"; }
+.flaticon-transport:before { content: "\f104"; }
+.flaticon-delivery-truck:before { content: "\f105"; }
+.flaticon-compact-disc:before { content: "\f106"; }
+.flaticon-video-game-console-with-gamepad:before { content: "\f107"; }
+.flaticon-watercraft-silhouette:before { content: "\f108"; }
+.flaticon-scooter:before { content: "\f109"; }
+.flaticon-hoisting-crane:before { content: "\f10a"; }
+.flaticon-demolishing:before { content: "\f10b"; }
+.flaticon-business-deal:before { content: "\f10c"; }
+.flaticon-solar:before { content: "\f10d"; }
